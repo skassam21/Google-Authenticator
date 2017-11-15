@@ -72,38 +72,17 @@ validateHOTP(char * secret_hex, char * HOTP_string)
 		}
 		counter[7] = i; // highest bit is hashed first
 
-		printf ("Counter: ");
-		for (j = 0; j < 8; j++)
-		  printf ("%02x ", counter[j] & 0xFF);
-		printf ("\n");
-
-		printf ("Hex: ");
-		for (j = 0; j < 10; j++)
-		  printf ("%02x ", data[j] & 0xFF);
-		printf ("\n");
-
 		hmac(data, 10, counter, 8, hmac_result, SHA1_DIGEST_LENGTH);
-		printf ("HMAC: ");
-		for (j = 0; j < 20; j++)
-		  printf ("%02x ", hmac_result[j] & 0xFF);
-		printf ("\n");
 
 		// offset is the byte that represents the 4 lower bits of last part
 		uint8_t offset = hmac_result[19] & 0x0f;
-		printf ("offset: %02x", offset & 0xFF);
-		printf ("\n");
 
 		long S;
 		S = (((hmac_result[offset] & 0x7f) << 24)
 		 | ((hmac_result[offset + 1] & 0xff) << 16)
 		 | ((hmac_result[offset + 2] & 0xff) << 8) | ((hmac_result[offset + 3] & 0xff)));
 
-		printf ("value: %ld\n", S);
-
 		long result = S % (long) pow(10.0, 6.0);
-
-		printf ("result: %ld\n", result);
-		printf ("HOTP: %ld\n", strtol(HOTP_string, NULL, 10));
 
 		// Compare HOTP_string with result
 		if (strtol(HOTP_string, NULL, 10) == result) {
