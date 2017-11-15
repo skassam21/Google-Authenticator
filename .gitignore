@@ -1,0 +1,7 @@
+*.o
+
+generateQRcode
+
+validateQRcode
+
+run.sh
