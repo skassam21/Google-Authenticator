@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <math.h>
+#include <time.h>
 
 #include "lib/sha1.h"
 
@@ -50,6 +51,46 @@ void hmac(const uint8_t *secret, int secretLength,
 	memcpy(result, sha, resultLength);
 }
 
+long
+computeHOTP(uint8_t *secret, uint8_t *counter) {
+	uint8_t hmac_result[SHA1_DIGEST_LENGTH];
+	int j;
+
+	printf ("Counter: ");
+	for (j = 0; j < 8; j++)
+	  printf ("%02x ", counter[j] & 0xFF);
+	printf ("\n");
+
+	printf ("Hex: ");
+	for (j = 0; j < 10; j++)
+	  printf ("%02x ", secret[j] & 0xFF);
+	printf ("\n");
+
+	hmac(secret, 10, counter, 8, hmac_result, SHA1_DIGEST_LENGTH);
+	printf ("HMAC: ");
+	for (j = 0; j < 20; j++)
+	  printf ("%02x ", hmac_result[j] & 0xFF);
+	printf ("\n");
+
+	// offset is the byte that represents the 4 lower bits of last part
+	uint8_t offset = hmac_result[19] & 0x0f;
+	printf ("offset: %02x", offset & 0xFF);
+	printf ("\n");
+
+	long S;
+	S = (((hmac_result[offset] & 0x7f) << 24)
+	 | ((hmac_result[offset + 1] & 0xff) << 16)
+	 | ((hmac_result[offset + 2] & 0xff) << 8) | ((hmac_result[offset + 3] & 0xff)));
+
+	printf ("value: %ld\n", S);
+
+	long result = S % (long) pow(10.0, 6.0);
+
+	printf ("result: %ld\n", result);
+
+	return result;
+}
+
 static int
 validateHOTP(char * secret_hex, char * HOTP_string)
 {
@@ -57,8 +98,6 @@ validateHOTP(char * secret_hex, char * HOTP_string)
 	// Convert secret_hex from string to binary representation
 	uint8_t data[10];
 	convertStrToHex(secret_hex, data);
-
-	uint8_t hmac_result[SHA1_DIGEST_LENGTH];
 
 	uint8_t counter[8];
 
@@ -72,37 +111,8 @@ validateHOTP(char * secret_hex, char * HOTP_string)
 		}
 		counter[7] = i; // highest bit is hashed first
 
-		printf ("Counter: ");
-		for (j = 0; j < 8; j++)
-		  printf ("%02x ", counter[j] & 0xFF);
-		printf ("\n");
+		long result = computeHOTP(data, counter);
 
-		printf ("Hex: ");
-		for (j = 0; j < 10; j++)
-		  printf ("%02x ", data[j] & 0xFF);
-		printf ("\n");
-
-		hmac(data, 10, counter, 8, hmac_result, SHA1_DIGEST_LENGTH);
-		printf ("HMAC: ");
-		for (j = 0; j < 20; j++)
-		  printf ("%02x ", hmac_result[j] & 0xFF);
-		printf ("\n");
-
-		// offset is the byte that represents the 4 lower bits of last part
-		uint8_t offset = hmac_result[19] & 0x0f;
-		printf ("offset: %02x", offset & 0xFF);
-		printf ("\n");
-
-		long S;
-		S = (((hmac_result[offset] & 0x7f) << 24)
-		 | ((hmac_result[offset + 1] & 0xff) << 16)
-		 | ((hmac_result[offset + 2] & 0xff) << 8) | ((hmac_result[offset + 3] & 0xff)));
-
-		printf ("value: %ld\n", S);
-
-		long result = S % (long) pow(10.0, 6.0);
-
-		printf ("result: %ld\n", result);
 		printf ("HOTP: %ld\n", strtol(HOTP_string, NULL, 10));
 
 		// Compare HOTP_string with result
@@ -117,6 +127,39 @@ validateHOTP(char * secret_hex, char * HOTP_string)
 static int
 validateTOTP(char * secret_hex, char * TOTP_string)
 {
+	// Convert secret_hex from string to binary representation
+	uint8_t data[10];
+	convertStrToHex(secret_hex, data);
+
+	uint8_t counter[8];
+	int j;
+	int i;
+
+	printf("currentTime: %ld\n", time(NULL));
+
+	long T = time(NULL) / 30;
+
+	for (i = -2; i <= 2; i++) {
+		long currentT = T + i;
+		printf("i: %i\n", i);
+		printf ("current T: %ld\n", currentT);
+
+		counter[7] = (uint8_t) (currentT & 0xff);
+		counter[6] = (uint8_t) ((currentT >> 8) & 0xff);
+		counter[5] = (uint8_t) ((currentT >> 16) & 0xff);
+		counter[4] = (uint8_t) ((currentT >> 24) & 0xff);
+		counter[3] = (uint8_t) ((currentT >> 32) & 0xff);
+		counter[2] = (uint8_t) ((currentT >> 40) & 0xff);
+		counter[1] = (uint8_t) ((currentT >> 48) & 0xff);
+		counter[0] = (uint8_t) ((currentT >> 56) & 0xff);
+
+		long result = computeHOTP(data, counter);
+
+		// Compare HOTP_string with result
+		if (strtol(TOTP_string, NULL, 10) == result) {
+			return(1);
+		}
+	}
 	return (0);
 }
 
