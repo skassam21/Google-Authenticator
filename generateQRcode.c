@@ -40,8 +40,11 @@ main(int argc, char * argv[])
 	convertStrToHex(secret_hex, buf);
 
 	// Base32 encode the secret
-	uint8_t secretHexEncoded[16];
+	uint8_t secretHexEncoded[17];
 	base32_encode((const uint8_t *) buf, 10, secretHexEncoded, 16);
+	
+	// Set end of encoded hex as null byte
+	secretHexEncoded[16] = '\0';
 
 	// URL encode account Name and issuer
 	const char* accountNameEncoded = urlEncode(accountName);
