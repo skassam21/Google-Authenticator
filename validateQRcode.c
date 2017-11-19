@@ -46,7 +46,7 @@ void hmac(const uint8_t *secret, int secretLength,
 	sha1_update(&ctx, sha, SHA1_DIGEST_LENGTH);
 	sha1_final(&ctx, sha);
 
-	// Copy result to output buffer and truncate or pad as necessary
+	// Copy result to output 
 	memset(result, 0, resultLength);
 	memcpy(result, sha, resultLength);
 }
@@ -57,7 +57,7 @@ computeHOTP(uint8_t *secret, uint8_t *counter) {
 
 	hmac(secret, 10, counter, 8, hmac_result, SHA1_DIGEST_LENGTH);
 
-	// offset is the byte that represents the 4 lower bits of last part
+	// offset is the byte that represents the 4 lower bits of last digit
 	uint8_t offset = hmac_result[19] & 0x0f;
 
 	long S;
