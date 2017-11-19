@@ -24,7 +24,8 @@ void hmac(const uint8_t *secret, int secretLength,
 	SHA1_INFO ctx;
 
 	uint8_t tmp_secret[64];
-	for (int i = 0; i < secretLength; ++i) {
+	int i;
+	for (i = 0; i < secretLength; ++i) {
 	tmp_secret[i] = secret[i] ^ 0x36;
 	}
 
@@ -36,7 +37,7 @@ void hmac(const uint8_t *secret, int secretLength,
 	uint8_t sha[SHA1_DIGEST_LENGTH];
 	sha1_final(&ctx, sha);
 
-	for (int i = 0; i < secretLength; ++i) {
+	for (i = 0; i < secretLength; ++i) {
 	tmp_secret[i] = secret[i] ^ 0x5C;
 	}
 	memset(tmp_secret + secretLength, 0x5C, 64 - secretLength);
