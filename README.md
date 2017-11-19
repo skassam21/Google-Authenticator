@@ -1,6 +1,4 @@
-#Shums Kassam, 998816713, skassam21@gmail.com
-
-##Generating QR Code: 
+## Generating QR Code: 
 
 The process for generating the QR code involves the following steps:
 - Convert the secret value into an array of binary values by looping through every two hex digits and converting them to a binary value using `strtol(subStr, NULL, 16)`
@@ -8,11 +6,11 @@ The process for generating the QR code involves the following steps:
 - URL encode the account name + the issuer 
 - combine the account name, issuer, and secret into the correct formats (`otpauth://hotp/%s?issuer=%s&secret=%s&counter=1` for HOTP and `otpauth://totp/%s?issuer=%s&secret=%s&period=30` for TOTP)
 
-##Validating QR Code:
+## Validating QR Code:
 
 The first step for validating the QR code for both HOTP and TOTP is to convert the secret into its binary representation. This is done in the same way for generating the QR code. 
 
-###HOTP
+### HOTP
 
 The following are the steps for validating HOTP:
 
@@ -26,7 +24,7 @@ For each value of the counter (in the range of 1 to 5 for this lab):
 
 The code is invalid if the result is wrong for each counter value.
 
-###TOTP
+### TOTP
 
 The following are the steps for validating TOTP:
 
